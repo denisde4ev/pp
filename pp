@@ -31,6 +31,7 @@ pp() {
 	while IFS= read -r __LINE__; do
 		__LINU_NUMBER=$((__LINU_NUMBER+1))
 		case $___LINE__ in
+			!!|!!#*|'!! #'*|'!!	#'*) ;;
 			!!*) eval "${__LINE__##!!}" 2>/dev/null || _die_ "LINE $__LINU_NUMBER: evaluation error";;
 			*!\{*\}!*) printf %s%s%s\\n "${__LINE__%%\!{*}" "$(_middle_ "$__LINE__")" "${__LINE__##*\}\!}";;
 			*) echo "$__LINE__";;
