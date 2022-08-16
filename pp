@@ -53,55 +53,57 @@ _pp_() {
 	while _readline_; do
 		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
 		case $__LINE__ in
-		!!|!!#*|'!! #'*|'!!	#'*) # fully ignore lines that contains only a comment
+			!!|!!#*|'!! #'*|'!!	#'*) # fully ignore lines that contains only a comment
 			;;
-		!\|*)
-			__LINES__=${__LINE__#??}
-			while :; do
-				_readline_ || {
-					_die_ "expected line that matches '!!*' but got end of file instead" 5
+			!!*)
+				eval "${__LINE__##!!}" || {
+					_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3
 				}
-				case $__LINE__ in
-					#!||!|#*|'!| #'*|'!|	#'*)
-						# DONT: DETECT IF LINE IS A COMMENT:
-						# it might not be a coment and it continues from theprevious line,
-						# for example here document and unclosed quote
-					#;;
-
-					!\|*) __LINES__=$__LINES__$NEW_LINE${__LINE__##??};;
-					!!*)
-						eval "$__LINES__$NEW_LINE${__LINE__##??}" || {
-							_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3
-						}
-						break
-					;;
-					\|\|*) # nested lin that is trimmed from start, note/TODO: !{}! is not interpreted here
-						__pp_tmp__=${__LINE__#??}
-						__pp_tmp__=${__pp_tmp__#"${__pp_tmp__%%[!" 	"]*}"}
-						__LINES__=$__LINES__$NEW_LINE"printf %s\\\\n $(_escape_ "${__pp_tmp__}")"
-					;;
-					*) __LINES__=$__LINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__LINE__")";;
-				esac
-			done
-			unset __LINES__
-			;;
-		!!*)
-			eval "${__LINE__##!!}" || {
-				_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3
-			}
-			;;
-		*!\{*\}!*)
-			__pp_tmp__=${1#*\!{}
-			__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
-				_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
-			}
-			printf %s%s%s${__pp_eof__:-\\n} \
-				"${__LINE__%%\!{*}" \
-				"$__pp_tmp__" \
-				"${__LINE__##*\}\!}"
 			;;
 			\|\|*) printf %s${__pp_eof__:-\\n} "${__LINE__#??}";;
-			*) printf %s${__pp_eof__:-\\n} "$__LINE__";;
+			!\|*)
+				__LINES__=${__LINE__#??}
+				while :; do
+					_readline_ || {
+						_die_ "expected line that matches '!!*' but got end of file instead" 5
+					}
+					case $__LINE__ in
+						#!||!|#*|'!| #'*|'!|	#'*)
+							# DONT: DETECT IF LINE IS A COMMENT:
+							# it might not be a coment and it continues from theprevious line,
+							# for example here document and unclosed quote
+						#;;
+
+						!\|*) __LINES__=$__LINES__$NEW_LINE${__LINE__##??};;
+						!!*)
+							eval "$__LINES__$NEW_LINE${__LINE__##??}" || {
+								_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3
+							}
+							break
+						;;
+						\|\|*) # nested lin that is trimmed from start, note/TODO: !{}! is not interpreted here
+							__pp_tmp__=${__LINE__#??}
+							__pp_tmp__=${__pp_tmp__#"${__pp_tmp__%%[!" 	"]*}"}
+							__LINES__=$__LINES__$NEW_LINE"printf %s\\\\n $(_escape_ "${__pp_tmp__}")"
+						;;
+						*) __LINES__=$__LINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__LINE__")";;
+					esac
+				done
+				unset __LINES__
+			;;
+			*!\{*\}!*)
+				__pp_tmp__=${1#*\!{}
+				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
+					_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
+				}
+				printf %s%s%s${__pp_eof__:-\\n} \
+					"${__LINE__%%\!{*}" \
+					"$__pp_tmp__" \
+					"${__LINE__##*\}\!}"
+				;;
+			*)
+				printf %s${__pp_eof__:-\\n} "$__LINE__"
+			;;
 		esac
 	done
 }
