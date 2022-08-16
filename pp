@@ -49,8 +49,7 @@ case ${ASH_VERSION+x}${ZSH_VERSION+x}${BASH_VERSION+x} in
 
 esac
 
-pp() {
-	[ $# -ne 0 ] && _die_ "No arguments are taken"
+_pp_() {
 	while _readline_; do
 		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
 		case $__LINE__ in
@@ -106,4 +105,20 @@ pp() {
 		esac
 	done
 }
+
+pp() {
+	case $1 in
+		--) shift;;
+		-) ;;
+		-*) _die_ "No arguments are taken";;
+	esac
+	case $# in 0) set -- -; esac
+	for __FILE__; do
+		case $__FILE__ in
+			-) _pp_;;
+			*) _pp_ < "$__FILE__";;
+		esac
+	done
+}
+
 pp "$@"
