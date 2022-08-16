@@ -1,4 +1,4 @@
-$ pp test-broken-multiline.txt.pp `EXECUTED COMMAND`
+$ pp test-broken-multiline.txt.preprocess `EXECUTED COMMAND`
 !# this is line is will leave ` WRITTEN TO STDOUT`
 
 123 `WRITTEN TO TTY`
