@@ -68,9 +68,9 @@ foo !{command}! bar
 
 Keep Line
 ---------
-Print the `$line` to keep the macro command in the output when run. Begin your command with:
+Print the `$__LINE__` to keep the macro command in the output when run. Begin your command with:
 ```
-!! echo "$line" && command
+!! echo "$__LINE__" && command
 ```
 
 
