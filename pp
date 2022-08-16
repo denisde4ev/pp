@@ -9,7 +9,7 @@ case $1 in
 		"  * Lines beginning !! are replaced with the following text evaluated" \
 		"    as a shell command." \
 		"  * Section !{...}! on one __LINE__ is replaced by the output of cmd '...'" \
-		"  * Variables to use: \$__LINU_NUMBER for line no. \$__LINE__ for line itself" \
+		"  * Variables to use: \$__LINE_NUMBER__ for line no. \$__LINE__ for line itself" \
 	;;
 -)
 	printf %s\\ "see --help for usage"
@@ -24,15 +24,15 @@ _die_() {
 
 _middle_() {
 	___no_front___=${1#*\!{}
-	eval "${___no_front___%\}\!*}" || _die_ "Line $__LINU_NUMBER: section evaluation error"
+	eval "${___no_front___%\}\!*}" || _die_ "Line $__LINE_NUMBER__: section evaluation error"
 }
 
 pp() {
 	while IFS= read -r __LINE__; do
-		__LINU_NUMBER=$((__LINU_NUMBER+1))
-		case $___LINE__ in
+		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
+		case $__LINE__ in
 			!!|!!#*|'!! #'*|'!!	#'*) ;;
-			!!*) eval "${__LINE__##!!}" 2>/dev/null || _die_ "LINE $__LINU_NUMBER: evaluation error";;
+			!!*) eval "${__LINE__##!!}" 2>/dev/null || _die_ "LINE $__LINE_NUMBER__: evaluation error";;
 			*!\{*\}!*) printf %s%s%s\\n "${__LINE__%%\!{*}" "$(_middle_ "$__LINE__")" "${__LINE__##*\}\!}";;
 			*) echo "$__LINE__";;
 		esac
