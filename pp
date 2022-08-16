@@ -112,7 +112,9 @@ _pp_() {
 	done
 }
 
+__PP_LVL__=0
 pp() {
+	__PP_LVL__=$((__PP_LVL__+1)) # allow included scripts to tetect included files level
 	case $1 in
 		--) shift;;
 		-) ;;
