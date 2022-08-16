@@ -8,7 +8,9 @@ NAME
 SYNOPSIS
 ========
 
-stdin | **pp** > output
+**pp** \<input-file \>output-file
+
+stdin | **pp** >output-file
 
 DESCRIPTION
 ===========
@@ -46,17 +48,17 @@ On Mon 11 Apr 2022 it is my birthday
 ```
 
 
-$line and $ln
-: Two variables may be used when writing macros. **\$line** is the contents of the line that is currently being evaluated. **\$ln** is the local line number. These can be used for more complex operations and side effects. For example,
+$\_\_LINE\_\_ and $\_\_LINU_NUMEBR\_\_
+: Two variables may be used when writing macros. **\$\_\_LINE\_\_** is the contents of the line that is currently being evaluated. **\$\_\_LINU_NUMEBR\_\_** is the local line number. These can be used for more complex operations and side effects. For example,
 ```
 foo
-!! echo "$line" && touch myfile
+!! echo "$__LINE__" && touch myfile
 bar
 ```
 touches _myfile_ and becomes,
 ```
 foo
-!! echo "$line" && touch myfile
+!! echo "$__LINE__" && touch myfile
 bar
 ```
 
@@ -71,7 +73,7 @@ The following metadata, stored at /etc/mydata.txt, will be used:
 !! cat /etc/mydata.txt
 This is updated nightly...
 ```
-running `cat instruction.txt | pp` gives the output,
+running `pp <./instruction.txt` gives the output,
 ```
 The following metadata, stored at /etc/mydata.txt, will be used:
 name  time    location 
@@ -102,7 +104,7 @@ Similarly, using environment variable control, a single template file can be exp
 ...
 </footer>
 ```
-running `cat template.html | INPUT_FILE=blog.md pp > blog.html` could be used to fill the template with the desired content at runtime.
+running `INPUT_FILE=blog.md pp <./template.html >./blog.html` could be used to fill the template with the desired content at runtime.
 
 Comments
 --------

@@ -8,32 +8,32 @@ case $1 in
 		"Syntax:" \
 		"  * Lines beginning !! are replaced with the following text evaluated" \
 		"    as a shell command." \
-		"  * Section !{...}! on one line is replaced by the output of cmd '...'" \
-		"  * Variables to use: \$ln for line no. \$line for line itself" \
+		"  * Section !{...}! on one __LINE__ is replaced by the output of cmd '...'" \
+		"  * Variables to use: \$__LINU_NUMBER for line no. \$__LINE__ for line itself" \
 	;;
 -)
 	printf %s\\ "see --help for usage"
 esac
 
 
-die() {
+_die_() {
 	printf %s\\n >&2 "Error: $1"
 	exit 1
 }
-[ $# -ne 0 ] && die "No arguments are taken"
+[ $# -ne 0 ] && _die_ "No arguments are taken"
 
-middle() {
-	no_front=${1#*\!{}
-	eval "${no_front%\}\!*}" || die "Line $ln: section evaluation error"
+_middle_() {
+	___no_front___=${1#*\!{}
+	eval "${___no_front___%\}\!*}" || _die_ "Line $__LINU_NUMBER: section evaluation error"
 }
 
 pp() {
-	while IFS= read -r line; do
-		ln=$((ln+1))
-		case $line in
-			!!*) eval "${line##!!}" 2>/dev/null || die "LINE $ln: evaluation error";;
-			*!\{*\}!*) printf %s%s%s\\n "${line%%\!{*}" "$(middle "$line")" "${line##*\}\!}";;
-			*) echo "$line";;
+	while IFS= read -r __LINE__; do
+		__LINU_NUMBER=$((__LINU_NUMBER+1))
+		case $___LINE__ in
+			!!*) eval "${__LINE__##!!}" 2>/dev/null || _die_ "LINE $__LINU_NUMBER: evaluation error";;
+			*!\{*\}!*) printf %s%s%s\\n "${__LINE__%%\!{*}" "$(_middle_ "$__LINE__")" "${__LINE__##*\}\!}";;
+			*) echo "$__LINE__";;
 		esac
 	done
 }
