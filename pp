@@ -20,13 +20,14 @@ die() {
 	printf %s\\n >&2 "Error: $1"
 	exit 1
 }
+[ $# -ne 0 ] && die "No arguments are taken"
 
 middle() {
 	no_front=${1#*\!{}
 	eval "${no_front%\}\!*}" || die "Line $ln: section evaluation error"
 }
 
-process() {
+pp() {
 	while IFS= read -r line; do
 		ln=$((ln+1))
 		case $line in
@@ -36,6 +37,4 @@ process() {
 		esac
 	done
 }
-
-[ $# -ne 0 ] && die "No arguments are taken"
-process
+pp "$@"
