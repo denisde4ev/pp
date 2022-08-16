@@ -20,20 +20,30 @@ _die_() {
 	printf %s\\n >&2 "Error: $1"
 	exit 1
 }
+
 [ $# -ne 0 ] && _die_ "No arguments are taken"
 
-_middle_() {
-	___no_front___=${1#*\!{}
-	eval "${___no_front___%\}\!*}" || _die_ "Line $__LINE_NUMBER__: section evaluation error"
-}
 
 pp() {
 	while IFS= read -r __LINE__; do
 		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
 		case $__LINE__ in
 			!!|!!#*|'!! #'*|'!!	#'*) ;;
-			!!*) eval "${__LINE__##!!}" 2>/dev/null || _die_ "LINE $__LINE_NUMBER__: evaluation error";;
-			*!\{*\}!*) printf %s%s%s\\n "${__LINE__%%\!{*}" "$(_middle_ "$__LINE__")" "${__LINE__##*\}\!}";;
+			!!*)
+				eval "${__LINE__##!!}" || {
+					_die_ "LINE $__LINE_NUMBER__: evaluation error"
+				}
+			;;
+			*!\{*\}!*)
+				__pp_tmp__=${1#*\!{}
+				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
+					_die_ "Line $__LINE_NUMBER__: section evaluation error"
+				}
+				printf %s \
+					"${__LINE__%%\!{*}" \
+					"$__pp_tmp__" \
+					"${__LINE__##*\}\!}"
+				;;
 			*) echo "$__LINE__";;
 		esac
 	done
