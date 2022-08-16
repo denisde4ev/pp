@@ -8,11 +8,15 @@ _die_() {
 case $1 in
 --help)
 	printf %s\\n \
-		"Usage: ${0##*/} v0.2.0" \
+		"Usage: ${0##*/} v0.3.0(denisde4ev)" \
 		"  * STDIN | ${0##*/} > output -- See pp(1) for details and examples" \
 		"Syntax:" \
 		"  * Lines beginning !! are replaced with the following text evaluated" \
-		"    as a shell command." \
+		"      as a shell command." \
+		"  * Lines beginning !| are for multiline evaluation" \
+		"      lines are parsed untill find line begining with !!" \
+		"  * Lines beginning || are replaced with the following text" \
+		"      without any modifications" \
 		"  * Section !{...}! on one __LINE__ is replaced by the output of cmd '...'" \
 		"  * Variables to use: \$__LINE_NUMBER__ for line no. \$__LINE__ for line itself" \
 	;

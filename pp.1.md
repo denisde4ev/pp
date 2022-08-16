@@ -1,4 +1,4 @@
-% PP(1) v0.2.0 April 2020 | pp-preprocessor manual
+% PP(1) v0.3.0(denisde4ev) 2022-08-16 | pp-preprocessor manual
 
 NAME
 ====
@@ -130,8 +130,11 @@ done
 BUGS
 ====
 
-Via the GitHub issue tracker: <https://github.com/jhjn/pp/issues>
+Via the GitHub issue tracker: <https://github.com/denisde4ev/pp/issues>
+for original jhjn/pp repo: <https://github.com/jhjn/pp/issues>
 
-AUTHOR
+
+AUTHORS
 ======
+Denis Dechev <denisde4ev@vivaldi.net>
 Joe Jenne <joe@jenne.uk>
