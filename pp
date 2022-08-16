@@ -1,7 +1,8 @@
 #!/bin/sh
 
 die() {
-	printf %s\\n >&2 "Error: $1" \
+	printf %s\\n >&2 \
+		"Error: $1" \
 		"Usage: ${0##*/} v0.2.0" \
 		"  * STDIN | ${0##*/} > output -- See pp(1) for details and examples" \
 		"Syntax:" \
