@@ -10,15 +10,18 @@ case $1 in
 		"    as a shell command." \
 		"  * Section !{...}! on one __LINE__ is replaced by the output of cmd '...'" \
 		"  * Variables to use: \$__LINE_NUMBER__ for line no. \$__LINE__ for line itself" \
+	;
+	exit
 	;;
 -)
-	printf %s\\ "see --help for usage"
+	printf %s\\n >&2 "see --help for usage"
+	exit 2
 esac
 
 
 _die_() {
 	printf %s\\n >&2 "Error: $1"
-	exit 1
+	exit "${2-2}"
 }
 
 [ $# -ne 0 ] && _die_ "No arguments are taken"
@@ -31,13 +34,13 @@ pp() {
 			!!|!!#*|'!! #'*|'!!	#'*) ;;
 			!!*)
 				eval "${__LINE__##!!}" || {
-					_die_ "LINE $__LINE_NUMBER__: evaluation error"
+					_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3
 				}
 			;;
 			*!\{*\}!*)
 				__pp_tmp__=${1#*\!{}
 				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
-					_die_ "Line $__LINE_NUMBER__: section evaluation error"
+					_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
 				}
 				printf %s%s%s\\n \
 					"${__LINE__%%\!{*}" \
