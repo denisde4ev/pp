@@ -30,5 +30,4 @@ process() {
 }
 
 [ $# -ne 0 ] && die "No arguments are taken"
-[ -t 0 ] && die "No input text provided"
 process
