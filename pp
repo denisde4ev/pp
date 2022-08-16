@@ -1,8 +1,8 @@
 #!/bin/sh
 
-die() {
-	printf %s\\n >&2 \
-		"Error: $1" \
+case $1 in
+--help)
+	printf %s\\n \
 		"Usage: ${0##*/} v0.2.0" \
 		"  * STDIN | ${0##*/} > output -- See pp(1) for details and examples" \
 		"Syntax:" \
@@ -10,7 +10,14 @@ die() {
 		"    as a shell command." \
 		"  * Section !{...}! on one line is replaced by the output of cmd '...'" \
 		"  * Variables to use: \$ln for line no. \$line for line itself" \
-	;
+	;;
+-)
+	printf %s\\ "see --help for usage"
+esac
+
+
+die() {
+	printf %s\\n >&2 "Error: $1"
 	exit 1
 }
 
