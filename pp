@@ -39,12 +39,12 @@ pp() {
 				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
 					_die_ "Line $__LINE_NUMBER__: section evaluation error"
 				}
-				printf %s \
+				printf %s%s%s\\n \
 					"${__LINE__%%\!{*}" \
 					"$__pp_tmp__" \
 					"${__LINE__##*\}\!}"
 				;;
-			*) echo "$__LINE__";;
+			*) printf %s\\n "$__LINE__";;
 		esac
 	done
 }
