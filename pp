@@ -1,5 +1,10 @@
 #!/bin/sh
 
+_die_() {
+	printf %s\\n >&2 "Error: $1"
+	exit "${2-2}"
+}
+
 case $1 in
 --help)
 	printf %s\\n \
@@ -13,21 +18,12 @@ case $1 in
 	;
 	exit
 	;;
--)
-	printf %s\\n >&2 "see --help for usage"
-	exit 2
+-*)
+	_die_ "see --help for usage"
 esac
 
-
-_die_() {
-	printf %s\\n >&2 "Error: $1"
-	exit "${2-2}"
-}
-
-[ $# -ne 0 ] && _die_ "No arguments are taken"
-
-
 pp() {
+	[ $# -ne 0 ] && _die_ "No arguments are taken"
 	while IFS= read -r __LINE__; do
 		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
 		case $__LINE__ in
