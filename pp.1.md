@@ -131,10 +131,12 @@ BUGS
 ====
 
 Via the GitHub issue tracker: <https://github.com/denisde4ev/pp/issues>
+
 for original jhjn/pp repo: <https://github.com/jhjn/pp/issues>
 
 
 AUTHORS
 ======
 Denis Dechev <denisde4ev@vivaldi.net>
+
 Joe Jenne <joe@jenne.uk>
