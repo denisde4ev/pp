@@ -96,7 +96,7 @@ _pp_() {
 				unset __LINES__
 			;;
 			*!\{*\}!*)
-				__pp_tmp__=${1#*\!{}
+				__pp_tmp__=${__LINE__#*\!{}
 				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
 					_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
 				}
