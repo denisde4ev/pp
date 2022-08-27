@@ -66,7 +66,7 @@ _pp_() {
 			;;
 			\|\|*) printf %s${__pp_eof__:-\\n} "${__LINE__#??}";;
 			!\|*)
-				__LINES__=${__LINE__#??}
+				__PREVLINES__=${__LINE__#??}
 				while :; do
 					_readline_ || {
 						_die_ "expected line that matches '!!*' but got end of file instead" 5
@@ -78,22 +78,22 @@ _pp_() {
 							# for example here document and unclosed quote
 						#;;
 
-						!\|*) __LINES__=$__LINES__$NEW_LINE${__LINE__##??};;
+						!\|*) __PREVLINES__=$__PREVLINES__$NEW_LINE${__LINE__##??};;
 						!!*)
-							eval "$__LINES__$NEW_LINE${__LINE__##??}" || {
+							eval "$__PREVLINES__$NEW_LINE${__LINE__##??}" || {
 								_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3
 							}
 							break
 						;;
-						\|\|*) # nested lin that is trimmed from start, note/TODO: !{}! is not interpreted here
+						\|\|*) # nested lin that is trimmed from start, note/TODO:  is not interpreted here
 							__pp_tmp__=${__LINE__#??}
 							__pp_tmp__=${__pp_tmp__#"${__pp_tmp__%%[!" 	"]*}"}
-							__LINES__=$__LINES__$NEW_LINE"printf %s\\\\n $(_escape_ "${__pp_tmp__}")"
+							__PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "${__pp_tmp__}")"
 						;;
-						*) __LINES__=$__LINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__LINE__")";;
+						*) __PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__LINE__")";;
 					esac
 				done
-				unset __LINES__
+				unset __PREVLINES__
 			;;
 			*!\{*\}!*)
 				__pp_tmp__=${__LINE__#*\!{}
