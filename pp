@@ -74,8 +74,23 @@ _pp_() {
 					case $__LINE__ in
 						#!||!|#*|'!| #'*|'!|	#'*)
 							# DONT: DETECT IF LINE IS A COMMENT:
-							# it might not be a coment and it continues from theprevious line,
-							# for example here document and unclosed quote
+							# it might not be a coment, but to be a continuation from previous line,
+							# for example here document and/or unclosed quote,
+							# insane example:
+							# ``` sh
+							# $ ( sed 's/-/--/g' << '#'EOF; tr - _ << \#EOF2; echo "echo-line:1
+							# > #echo-line:2" )
+							# > #here-document-for-sed
+							# > #EOF
+							# > #here-document-for-tr
+							# > #EOF2
+							# ```
+							# ``` sh.output
+							# #shere--document--for--sed
+							# #here_document_for_tr
+							# echo-line:1
+							# #echo-line:2
+							# ```
 						#;;
 
 						!\|*) __PREVLINES__=$__PREVLINES__$NEW_LINE${__LINE__##??};;
