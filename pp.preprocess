@@ -8,7 +8,7 @@ _die_() {
 case $1 in
 --help)
 	printf %s\\n \
-		"Usage: ${0##*/} v0.3.1(denisde4ev)" \
+		"Usage: ${0##*/} !{printf %s "${VERSION?}"}!(denisde4ev)" \
 		"  * STDIN | ${0##*/} > output -- See pp(1) for details and examples" \
 		"Syntax:" \
 		"  * Lines beginning !! are replaced with the following text evaluated" \
@@ -17,7 +17,7 @@ case $1 in
 		"      lines are parsed untill find line begining with !!" \
 		"  * Lines beginning || are replaced with the following text" \
 		"      without any modifications" \
-		"  * Section !{...}! on one __LINE__ is replaced by the output of cmd '...'" \
+		"  * Section !{echo \!\{...\}\!}! on one __LINE__ is replaced by the output of cmd '...'" \
 		"  * Variables to use: \$__LINE_NUMBER__ for line no. \$__LINE__ for line itself" \
 	;
 	exit
