@@ -31,11 +31,10 @@ NEW_LINE='
 '
 
 _readline_() {
+	__LINE_EOF__=$NEW_LINE
 	IFS= read -r __LINE__ || {
-		case $__LINE__ in
-			'') return $?;;
-			?*) __pp_eof__='';;
-		esac
+		__LINE_EOF__=''
+		case $__LINE__ in '') return $?; esac
 	}
 }
 
@@ -64,7 +63,7 @@ _pp_() {
 					_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3
 				}
 			;;
-			\|\|*) printf %s${__pp_eof__:-\\n} "${__LINE__#??}";;
+			\|\|*) printf %s"$__LINE_EOF__" "${__LINE__#??}";;
 			!\|*)
 				__PREVLINES__=${__LINE__#??}
 				while :; do
@@ -115,13 +114,13 @@ _pp_() {
 				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
 					_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
 				}
-				printf %s%s%s${__pp_eof__:-\\n} \
+				printf %s%s%s"$__LINE_EOF__" \
 					"${__LINE__%%\!{*}" \
 					"$__pp_tmp__" \
 					"${__LINE__##*\}\!}"
 				;;
 			*)
-				printf %s${__pp_eof__:-\\n} "$__LINE__"
+				printf %s"$__LINE_EOF__" "$__LINE__"
 			;;
 		esac
 	done
