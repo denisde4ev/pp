@@ -41,7 +41,7 @@ _readline_() {
 
 case ${ASH_VERSION+x}${ZSH_VERSION+x}${BASH_VERSION+x} in
 *x*)
-	eval "_escape_ () { printf %s\\\\n \"${1//\\'/\\'\\\\\\'\\'}\"; }"
+	eval "_escape_() { printf %s\\\\n \"${1//\\'/\\'\\\\\\'\\'}\"; }"
 	;;
 *)
 	_escape_() {
@@ -129,7 +129,7 @@ _pp_() {
 
 __PP_LVL__=0
 pp() {
-	__PP_LVL__=$((__PP_LVL__+1)) # allow included scripts to tetect included files level
+	__PP_LVL__=$((__PP_LVL__+1)) # allow included scripts to detect included file level
 	case $1 in
 		--) shift;;
 		-) ;;
