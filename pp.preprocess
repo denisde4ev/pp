@@ -38,18 +38,29 @@ _readline_() {
 	}
 }
 
-case ${ASH_VERSION+x}${ZSH_VERSION+x}${BASH_VERSION+x} in
-*x*)
+__pp_tmp__=${BASH_VERSION-${ASH_VERSION-${ZSH_VERSION-${KSH_VERSION-${YASH_VERSION-$( (eval 'a=" "; echo ${a/" "/x}') 2>/dev/null 1>&2 )}}}}}
+case $?:$__pp_tmp__ in # doesnt work for `dash`, `posh`, (older version of working shell are never tested)
+0:*[!" "]*)
 	eval "_escape_() { printf %s\\\\n \"${1//\\'/\\'\\\\\\'\\'}\"; }"
 	;;
 *)
 	_escape_() {
-		case $1 in
-			*"'"*) printf %s "$1" | sed "s/'/'\\\\''/g; 1 s/^/'/; $ s/$/' /";;
-			*) printf %s "'$1'";;
+		case $1 in *"'"*) ;; *)
+			printf %s "'$1'"
+			return
 		esac
+		case ${#1} in [0-9]|[0-9][0-9]) # calling `sed` might be slow for many short strings
+			__pp_tmp__=$1
+			printf "'"
+			while case $__pp_tmp__ in *"'"*) ;; *) false; esac; do
+				printf %s "${__pp_tmp__%%\'*}'\''";
+				__pp_tmp__=${__pp_tmp__#*"'"}
+			done
+			printf %s "$__pp_tmp__'"
+			return
+		esac
+		printf %s "$1" | sed "s/'/'\\\\''/g; 1s/^/'/; $s/$/' /"
 	}
-
 esac
 
 _pp_() {
