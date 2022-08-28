@@ -1,0 +1,35 @@
+!! set -eu
+!! case $__FILE__ in */*) cd "${__FILE__%/*}"; esac
+!!
+!|case $(git rev-parse --abbrev-ref HEAD) in master) ;; *)
+!|	printf %s\\n >&2 "this script must be run from master branch!"
+!|	exit 1
+!!esac
+!!
+!| #case $(git status -unormal --porcelain | grep -vx ".. ${0##*/}") in ?*)
+!| #	printf %s\\n >&2 "there are changes that needs to be commited!"
+!| #	exit 1
+!! #esac
+
+
+!| printf >&2 "_pkgver: "
+!| read _pkgver
+!! pkgver=${_pkgver#v}
+
+pkgname=pp-denisde4ev
+_pkgver=!{printf %s "${_pkgver}"}!
+pkgver=!{printf %s "${pkgver}"}!
+
+
+!|build() {
+!|	pandoc --standalone ./pp.1.md --to man > pp.1
+!|	#pp pp.preprocess > pp || \
+!|	sed 's/echo \\!\\{...\\}\\!/.../ ; s/!{printf %s "${_pkgver:-${VERSION?}}"}!/'"${_pkgver?}/" pp.preprocess > pp
+!|}
+!! build && printf %s\\n "$__PREVLINES__"
+
+# busybox makes smaller files, separate qzip to provide -9 max optimization
+fakeroot busybox tar -cvf - pp pp.1 | gzip -9 > pp-"${_pkgver}".tar.gz
+
+
+gh release create --title="${_pkgver}" "${_pkgver}"  pp pp-"${_pkgver}".tar.gz
