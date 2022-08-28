@@ -68,7 +68,7 @@ _pp_() {
 				__PREVLINES__=${__LINE__#??}
 				while :; do
 					_readline_ || {
-						_die_ "expected line that matches '!!*' but got end of file instead" 5
+						_die_ "expected line that matches '!!*', but got end of input instead" 5
 					}
 					case $__LINE__ in
 						#!||!|#*|'!| #'*|'!|	#'*)
