@@ -39,6 +39,40 @@ _readline_() {
 	}
 }
 
+
+# solved:
+# case ${ASH_VERSION+x}${ZSH_VERSION+x}${BASH_VERSION+x} in
+# *x*)
+# 	_eval_trap_() {
+# 		# why create trap instead of: `eval '$1' || die ...`
+# 		# reason: `set -e` is not working. https://mywiki.wooledge.org/BashFAQ/105
+# 
+# 		trap "$2" ERR
+# 		eval "$1"
+# 		case $? in 0) ;; *) eval "$2"; esac
+# 		trap - ERR # remove ERR trap
+# 	}
+# 	;;
+# '')
+# 	# trap ERR seems to be only for ksh and bash
+# 	# does not run on dash or sh ( and semms to have no alternative , BUT GOT 1 https://stackoverflow.com/a/58297505/10823470 )
+# 	# none of this wokrs: `for i in {1..64} EXIT ERR QUIT; do dash -c ' set -eu; trap " PRINT ME, when '$i' : \$?" '$i'; false; echo NEVER PRINT ME  '; done`
+# 	_eval_trap_() {
+# 		eval "$1" || eval "$2"
+# 	}
+# esac
+#
+_eval_trap_() {
+	# why create trap instead of: `eval '$1' || die ...`
+	# reason: `set -e` is not working. https://mywiki.wooledge.org/BashFAQ/105
+	# thanks https://stackoverflow.com/a/58297505/10823470 for sh version
+
+	trap "(exit \$?) && exit || $2" EXIT
+	eval "$1"
+	case $? in 0) ;; *) eval "trap - EXIT; (exit $?) || $2"; esac
+	trap - EXIT # remove ERR trap
+}
+
 case ${ASH_VERSION+x}${ZSH_VERSION+x}${BASH_VERSION+x} in
 *x*)
 	eval "_escape_ () { printf %s\\\\n \"${1//\\'/\\'\\\\\\'\\'}\"; }"
@@ -60,9 +94,9 @@ _pp_() {
 			!!|!!#*|'!! #'*|'!!	#'*) # fully ignore lines that contains only a comment
 			;;
 			!!*)
-				eval "${__LINE__##!!}" || {
-					_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3
-				}
+				_eval_trap_ "${__LINE__##!!}" \
+					'_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3' \
+				;
 			;;
 			\|\|*) printf %s${__pp_eof__:-\\n} "${__LINE__#??}";;
 			!\|*)
@@ -95,9 +129,9 @@ _pp_() {
 
 						!\|*) __PREVLINES__=$__PREVLINES__$NEW_LINE${__LINE__##??};;
 						!!*)
-							eval "$__PREVLINES__$NEW_LINE${__LINE__##??}" || {
-								_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3
-							}
+							_eval_trap_ "$__PREVLINES__$NEW_LINE${__LINE__##??}" \
+								'_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3' \
+							;
 							break
 						;;
 						\|\|*) # nested lin that is trimmed from start, note/TODO: !{}! is not interpreted here
@@ -112,9 +146,22 @@ _pp_() {
 			;;
 			*!\{*\}!*)
 				__pp_tmp__=${__LINE__#*\!{}
-				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
-					_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
-				}
+
+				# bug/note:
+				# on dash: `set -e; a=$( false; echo not-stopped )` does exit and `a=''` as expected.
+				# however on bash (at least for newest version 5.1): does not exit and `a=not-stopped`!
+				# ref: https://stackoverflow.com/questions/69138072/shopt-s-inherit-errexit-has-no-effect-in-declare-command
+				# > errexit behavior is wildly different between individual shell releases,
+				# > **not to mention between different shells and even on different calling contexts**
+				#
+				# consider fix: instead of stdout to use var. maybe `o` short for output.
+				# in this way interpreted input will be shorter for inline replacement:
+				# `\!{o=$test}\!` = (old) `\!{printf %s "$test"}\!` -> `test`
+				_eval_trap_ '__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}")' \
+					'_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3' \
+				;
+
+
 				printf %s%s%s${__pp_eof__:-\\n} \
 					"${__LINE__%%\!{*}" \
 					"$__pp_tmp__" \
