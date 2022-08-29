@@ -30,11 +30,12 @@ esac
 NEW_LINE='
 '
 
+__LINE_EOF__=$NEW_LINE
 _readline_() {
-	__LINE_EOF__=$NEW_LINE
 	IFS= read -r __LINE__ || {
+		__pp_tmp__=$?
 		__LINE_EOF__=''
-		case $__LINE__ in '') return $?; esac
+		case $__LINE__ in '') return $__pp_tmp__; esac
 	}
 }
 
