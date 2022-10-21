@@ -195,6 +195,7 @@ pp() {
 	esac
 	case $# in 0) set -- -; esac
 	for __FILE__; do
+		[ -d "$__FILE__" ] && _die_ "'$__FILE__' is a directory"
 		case $__FILE__ in
 			-) _pp_;;
 			*) _pp_ < "$__FILE__";;
