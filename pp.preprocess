@@ -22,6 +22,7 @@ case $1 in
 	;
 	exit
 	;;
+--) shift;;
 -*)
 	_die_ "see --help for usage"
 esac
