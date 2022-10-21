@@ -32,7 +32,9 @@ NEW_LINE='
 
 __LINE_EOF__=$NEW_LINE
 _readline_() {
-	IFS= read -r __LINE__ || {
+	IFS= read -r __LINE__ && \
+	__LINE_NUMBER__=$((__LINE_NUMBER__+1)) \
+	|| {
 		__pp_tmp__=$?
 		__LINE_EOF__=''
 		case $__LINE__ in '') return $__pp_tmp__; esac
@@ -100,13 +102,12 @@ esac
 
 _pp_() {
 	while _readline_; do
-		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
 		case $__LINE__ in
 			!!|!!#*|'!! #'*|'!!	#'*) # fully ignore lines that contains only a comment
 			;;
 			!!*)
 				_eval_trap_ "${__LINE__##!!}" \
-					'_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3' \
+					'_die_ "LINE $__LINE_NUMBER__: evaluation error $?, in line: '\''$__LINE__'\''" 3' \
 				;
 			;;
 			\|\|*) printf %s"$__LINE_EOF__" "${__LINE__#??}";;
@@ -141,7 +142,7 @@ _pp_() {
 						!\|*) __PREVLINES__=$__PREVLINES__$NEW_LINE${__LINE__##??};;
 						!!*)
 							_eval_trap_ "$__PREVLINES__$NEW_LINE${__LINE__##??}" \
-								'_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3' \
+								'_die_ "LINES before $__LINE_NUMBER__: evaluation error $?" 3' \
 							;
 							break
 						;;
@@ -166,10 +167,10 @@ _pp_() {
 				# > **not to mention between different shells and even on different calling contexts**
 				#
 				# consider fix: instead of stdout to use var. maybe `o` short for output.
-				# in this way interpreted input will be shorter for inline replacement:
+				# in this way interpreted input will be shorter for inline replacement: , but will encourage to use above bug/note.
 				# `\!{o=$test}\!` = (old) `\!{printf %s "$test"}\!` -> `test`
 				_eval_trap_ '__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}")' \
-					'_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3' \
+					'_die_ "Line $__LINE_NUMBER__: section evaluation error $?, in line: '\''$__LINE__'\''" 3' \
 				;
 
 
