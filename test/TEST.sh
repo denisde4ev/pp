@@ -39,8 +39,8 @@ for i in *.preprocess; do
 	esac
 
 	case $i in status=${?}__*) ;; *)
-		i_err=1
 		printf %s\\n  >&2 "file '$i' got not epected exit status code: $?"
+		i_err=1
 	esac
 
 	diff "$t" "$j" || {
