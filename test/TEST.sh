@@ -1,5 +1,10 @@
 #!/bin/sh
 
+case $1 in --help) printf %s\\n "usage: $0 [test]..."; exit; esac
+
+cd "${0%/*}" || exit
+
+# config:
 diff() {
 	command diff --color=auto -u "$@"
 }
@@ -7,7 +12,6 @@ pp_comm=../pp.preprocess
 
 
 
-cd "${0%/*}" || exit
 
 [ -x "$pp_comm" ] || {
 printf %s\\n "please first build pp and enshure path is in '$PWD/$pp_comm' and can be executed by testing user"
@@ -24,7 +28,8 @@ trap 'rm -f -- "$t"' EXIT QUIT KILL
 errs=0
 i_err=0
 count=0
-for i in *.preprocess; do
+case $# in 0) set -- *.preprocess; esac
+for i; do
 	count=$(( count + 1 ))
 	i_err=0
 	j=${i%.*}
