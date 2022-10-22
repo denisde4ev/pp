@@ -196,6 +196,11 @@ pp() {
 		-?*) _die_ "No arguments are taken";;
 	esac
 	case $# in 0) set -- -; esac
+
+	local __FILE__ __LINE__ __LINE_NUMBER__ __LINE_EOF__ >&2 # recommend to use shell that has local, otherwise error messages will not have correct/missing line number and filename
+	unset __FILE__ __LINE__ __LINE_NUMBER__ # tho dash has 'local' command, the vars are not unset
+	__LINE_EOF__=$NEW_LINE
+
 	for __FILE__; do
 		[ ! -d "$__FILE__" ] || _die_ "'$__FILE__' is a directory"
 		case $__FILE__ in
@@ -203,6 +208,7 @@ pp() {
 			*) _pp_ < "$__FILE__";;
 		esac
 	done
+	unset __FILE__ __LINE__ __LINE_EOF__ __LINE_NUMBER__
 }
 
 pp "$@"

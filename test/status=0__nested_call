@@ -1,0 +1,7 @@
+__FILE__:1 == ./status=0__nested_call.preprocess:1
+-:1 == -:1
+-:2 == -:2
+-:3 == -:3
+-:4 == -:4
+-:5 == -:5
+__FILE__:3 == ./status=0__nested_call.preprocess:3
