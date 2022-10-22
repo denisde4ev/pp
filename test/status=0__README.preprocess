@@ -1,6 +1,6 @@
 
 ```
-Today (!{date '+%Y-%m-%d'}!) there's a lot to do:
+Today (!{date -d@0 '+%Y-%m-%d'}!) there's a lot to do:
 !| cat << EOF
 !|* Wash clothes
 !|* Read pure sh bible
