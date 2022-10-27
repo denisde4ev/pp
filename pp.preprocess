@@ -17,7 +17,7 @@ case $1 in
 		"      lines are parsed untill find line begining with !!" \
 		"  * Lines beginning || are replaced with the following text" \
 		"      without any modifications" \
-		"  * Section !{echo \!\{...\}\!}! on one __LINE__ is replaced by the output of cmd '...'" \
+		"  * Section "\!\{...\}\!" on one __LINE__ is replaced by the output of cmd '...'" \
 		"  * Variables to use: \$__LINE_NUMBER__ for line no. \$__LINE__ for line itself" \
 	;
 	exit
@@ -144,8 +144,8 @@ _pp_() {
 				done
 				unset __PREVLINES__
 			;;
-			*!\{*\}!*)
-				__pp_tmp__=${__LINE__#*\!{}
+			*!\{*\}!*) # TODO: fix more then 2 inlines for same line
+				__pp_tmp__=${__LINE__#*\!\{}
 
 				# bug/note:
 				# on dash: `set -e; a=$( false; echo not-stopped )` does exit and `a=''` as expected.
@@ -163,7 +163,7 @@ _pp_() {
 
 
 				printf %s%s%s${__pp_eof__:-\\n} \
-					"${__LINE__%%\!{*}" \
+					"${__LINE__%%\!\{*}" \
 					"$__pp_tmp__" \
 					"${__LINE__##*\}\!}"
 				;;
@@ -180,6 +180,7 @@ pp() {
 	case $1 in
 		--) shift;;
 		-) ;;
+		# TODO/consider: adding -v for verbose output (+ _log_ fn)
 		-*) _die_ "No arguments are taken";;
 	esac
 	case $# in 0) set -- -; esac
