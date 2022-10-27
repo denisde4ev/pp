@@ -31,7 +31,7 @@ esac
 NEW_LINE='
 '
 
-__LINE_EOF__=$NEW_LINE
+#__LINE_EOF__=$NEW_LINE # is set bellow
 _readline_() {
 	IFS= read -r __LINE__ && \
 	__LINE_NUMBER__=$((__LINE_NUMBER__+1)) \
@@ -101,14 +101,14 @@ case $?:$__pp_tmp__ in # doesnt work for `dash`, `posh`, (older version of worki
 	}
 esac
 
-_pp_() {
+_pp_interpred_stdin_() {
 	while _readline_; do
 		case $__LINE__ in
 			!!|!!#*|'!! #'*|'!!	#'*) # fully ignore lines that contains only a comment
 			;;
 			!!*)
 				_eval_trap_ "${__LINE__##!!}" \
-					'_die_ "LINE $__LINE_NUMBER__: evaluation error $?, in line: '\''$__LINE__'\''" 3' \
+					'_die_ "$__FILE__:$__LINE_NUMBER__: '\''$__LINE__'\'': [line] evaluation error $?" 3' \
 				;
 			;;
 			\|\|*) printf %s"$__LINE_EOF__" "${__LINE__#??}";;
@@ -116,7 +116,7 @@ _pp_() {
 				__PREVLINES__=${__LINE__#??}
 				while :; do
 					_readline_ || {
-						_die_ "expected line that matches '!!*', but got end of input instead" 5
+						_die_ "$__FILE__:$__LINE_NUMBER__: [EOF] expected line to that match '!!*', but got end of input instead" 5
 					}
 					case $__LINE__ in
 						#!||!|#*|'!| #'*|'!|	#'*)
@@ -143,14 +143,14 @@ _pp_() {
 						!\|*) __PREVLINES__=$__PREVLINES__$NEW_LINE${__LINE__##??};;
 						!!*)
 							_eval_trap_ "$__PREVLINES__$NEW_LINE${__LINE__##??}" \
-								'_die_ "LINES before $__LINE_NUMBER__: evaluation error $?" 3' \
+								'_die_ "$__FILE__:(lines before $__LINE_NUMBER__): [lines] evaluation error $?" 3' \
 							;
 							break
 						;;
 						\|\|*) # nested lin that is trimmed from start
 							__pp_tmp__=${__LINE__#??}
 							__pp_tmp__=${__pp_tmp__#"${__pp_tmp__%%[!" 	"]*}"}
-							__PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "${__pp_tmp__}")"
+							__PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__pp_tmp__")"
 						;;
 						# NOTE/UNIMPLEMENTED/TODO:! here does not parse for `\!{...}\!` expression.
 						*) __PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__LINE__")";;
@@ -172,9 +172,10 @@ _pp_() {
 				# in this way interpreted input will be shorter for inline replacement: , but will encourage to use above bug/note.
 				# `\!{o=$test}\!` = (old) `\!{printf %s "$test"}\!` -> `test`
 				_eval_trap_ '__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}")' \
-					'_die_ "Line $__LINE_NUMBER__: section evaluation error $?, in line: '\''$__LINE__'\''" 3' \
+					'_die_ "$__FILE__:$__LINE_NUMBER__: '\''$__LINE__'\'': [inline] evaluation error $?" 3' \
 				;
 
+				# todo: write tests for how error are handled here
 
 				printf %s%s%s"$__LINE_EOF__" \
 					"${__LINE__%%\!{*}" \
@@ -189,26 +190,43 @@ _pp_() {
 }
 
 __PP_LVL__=0
-pp() {
-	__PP_LVL__=$((__PP_LVL__+1)) # allow included scripts to detect included file level
+# if calling this fn, you should provide the subshell,
+# for example: `!! ( set -eu; pp ... )`
+# otherwise the error message will me messed up (line counting, file names, etc.)
+_pp_() {
+	__PP_LVL__=$(( __PP_LVL__ + 1 )) # allow included scripts to detect included file level
+	unset __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__; __LINE_EOF__=$NEW_LINE
+	# DONT: local __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__ __LINE_EOF__; __LINE_EOF__=$NEW_LINE
+	# REASON: when using `trap ...` is executed ouside all fns and vars are not set - in top level where trap is handled
+	# AND and I have not tested what will happen after `trap - ERR` in nested *pp* call
+	#
+	# possible fix is to `trap '__FILE__='"$(quote "$__FILE__")"...`
+	# but becomes very long and pointless since
+	# subshell is already preferred in order to not stop parrent process when executing `!! exit`
+
 	case $1 in
 		--) shift;;
 		-?*) _die_ "No arguments are taken";;
 	esac
 	case $# in 0) set -- -; esac
 
-	local __FILE__ __LINE__ __LINE_NUMBER__ __LINE_EOF__ >&2 # recommend to use shell that has local, otherwise error messages will not have correct/missing line number and filename
-	unset __FILE__ __LINE__ __LINE_NUMBER__ # tho dash has 'local' command, the vars are not unset
-	__LINE_EOF__=$NEW_LINE
 
 	for __FILE__; do
-		[ ! -d "$__FILE__" ] || _die_ "'$__FILE__' is a directory"
+		[ ! -d "$__FILE__" ] || {
+			_die_ "'$__FILE__' is a directory" # dash/ash does not have native error for this, but bash does have.
+		}
 		case $__FILE__ in
-			-) _pp_;;
-			*) _pp_ < "$__FILE__";;
+			-) _pp_interpred_stdin_;;
+			*) _pp_interpred_stdin_ < "$__FILE__";;
 		esac
+		case $? in 0) ;; *) return; esac
 	done
-	unset __FILE__ __LINE__ __LINE_EOF__ __LINE_NUMBER__
+	#unset __FILE__ __LINE__ __PREVLINES__ __LINE_EOF__ __LINE_NUMBER__ # poinless in subshell end / main call end
 }
 
-pp "$@"
+
+pp() { ( _pp_ "$@" ); }
+
+case ${0##*/} in pp|pp.preprocess*|pp-shebang)
+	_pp_ "$@"
+esac

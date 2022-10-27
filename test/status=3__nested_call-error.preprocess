@@ -1,3 +1,0 @@
-!! echo __FILE__:1 == $__FILE__:$__LINE_NUMBER__
-!! echo '!! exit 123' | pp 
-!! echo __FILE__:3 == $__FILE__:$__LINE_NUMBER__ # dont print me
