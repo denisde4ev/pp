@@ -2,7 +2,7 @@
 
 _die_() {
 	printf %s\\n >&2 "Error: $1"
-	exit "${2-2}"
+	return "${2-2}"
 }
 
 case $1 in
@@ -25,6 +25,7 @@ case $1 in
 --) ;; # do not shift, duplication of '--' in below _pp_ fn call
 -?*)
 	_die_ "see --help for usage"
+	exit
 esac
 
 # hope eval wont chane it
@@ -70,9 +71,9 @@ _eval_trap_() {
 	# reason: `set -e` is not working. https://mywiki.wooledge.org/BashFAQ/105
 	# thanks https://stackoverflow.com/a/58297505/10823470 for sh version
 
-	trap "(exit \$?) && exit || $2" EXIT
+	trap "(exit \$?) && exit || $2; return" EXIT
 	eval "$1"
-	case $? in 0) ;; *) eval "trap - EXIT; (exit $?) || $2"; esac
+	case $? in 0) ;; *) eval "trap - EXIT; (exit $?) || $2; return"; esac
 	trap - EXIT # remove ERR trap
 }
 
@@ -117,6 +118,7 @@ _pp_interpred_stdin_() {
 				while :; do
 					_readline_ || {
 						_die_ "$__FILE__:$__LINE_NUMBER__: [EOF] expected line to that match '!!*', but got end of input instead" 5
+						return
 					}
 					case $__LINE__ in
 						#!||!|#*|'!| #'*|'!|	#'*)
@@ -196,7 +198,7 @@ __PP_LVL__=0
 _pp_() {
 	__PP_LVL__=$(( __PP_LVL__ + 1 )) # allow included scripts to detect included file level
 	unset __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__; __LINE_EOF__=$NEW_LINE
-	# DONT: local __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__ __LINE_EOF__; __LINE_EOF__=$NEW_LINE
+	# DONT: local __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__ __LINE_EOF__; __LINE_EOF__=$NEW_LINE # recommend to use shell that has local, otherwise error messages will not have correct/missing line number and filename
 	# REASON: when using `trap ...` is executed ouside all fns and vars are not set - in top level where trap is handled
 	# AND and I have not tested what will happen after `trap - ERR` in nested *pp* call
 	#
@@ -208,7 +210,7 @@ _pp_() {
 		--) shift;;
 		-) ;;
 		# TODO/consider: adding -v for verbose output (+ _log_ fn)
-		-?*) _die_ "No arguments are taken";;
+		-?*) _die_ "No arguments are taken"; return;;
 	esac
 	case $# in 0) set -- -; esac
 
@@ -216,6 +218,7 @@ _pp_() {
 	for __FILE__; do
 		[ ! -d "$__FILE__" ] || {
 			_die_ "'$__FILE__' is a directory" # dash/ash does not have native error for this, but bash does have.
+			return
 		}
 		case $__FILE__ in
 			-) _pp_interpred_stdin_;;
