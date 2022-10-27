@@ -182,6 +182,12 @@ _pp_interpred_stdin_() {
 					"$__pp_tmp__" \
 					"${__LINE__##*\}\!}"
 				;;
+			\#\!\/*/pp|\#\!"/usr/bin/env pp")
+				# if first line is shebang of pp, then skip it
+				case $__LINE_NUMBER__ in 1) ;; *)
+					printf %s"$__LINE_EOF__" "$__LINE__"
+				esac
+			;;
 			*)
 				printf %s"$__LINE_EOF__" "$__LINE__"
 			;;
@@ -229,6 +235,6 @@ _pp_() {
 
 pp() { ( _pp_ "$@" ); }
 
-case ${0##*/} in pp|pp.preprocess*|pp-shebang)
+case ${0##*/} in pp|pp.preprocess*)
 	_pp_ "$@"
 esac
