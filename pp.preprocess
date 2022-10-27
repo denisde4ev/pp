@@ -22,7 +22,7 @@ case $1 in
 	;
 	exit
 	;;
---) shift;;
+--) ;; # do not shift, duplication of '--' in below _pp_ fn call
 -?*)
 	_die_ "see --help for usage"
 esac
