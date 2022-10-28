@@ -1,0 +1,20 @@
+!! echo(){ printf %s\\n "$*"; }; echo __LINE_NUMBER__=$__LINE_NUMBER__ == 1
+!! echo __LINE_NUMBER__=$__LINE_NUMBER__ == 2
+!! echo __LINE_NUMBER__=$__LINE_NUMBER__ == 3
+
+
+!|
+!| echo __LINE_NUMBER__=$__LINE_NUMBER__ == 10
+!| echo __LINE__="'$__LINE__'" == \''!! # a comment'\'
+!|
+!! # a comment
+
+!| :
+!! echo __PREVLINES__="'$__PREVLINES__'" == \' :\'
+
+!|:
+!| :
+!! echo __PREVLINES__="'$__PREVLINES__'" == \$\':\\n :\'
+
+!! echo __LINE_EOF__="'$__LINE_EOF__'" == \$\'\\n\'
+!! echo __LINE_EOF__="'$__LINE_EOF__'" == \'\'

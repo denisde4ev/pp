@@ -17,12 +17,13 @@ case $1 in
 		"      lines are parsed untill find line begining with !!" \
 		"  * Lines beginning || are replaced with the following text" \
 		"      without any modifications" \
-		"  * Section !{echo \!\{...\}\!}! on one __LINE__ is replaced by the output of cmd '...'" \
+		"  * Section "\!\{...\}\!" on one __LINE__ is replaced by the output of cmd '...'" \
 		"  * Variables to use: \$__LINE_NUMBER__ for line no. \$__LINE__ for line itself" \
 	;
 	exit
 	;;
--*)
+--) ;; # do not shift, duplication of '--' in below _pp_ fn call
+-?*)
 	_die_ "see --help for usage"
 esac
 
@@ -30,12 +31,49 @@ esac
 NEW_LINE='
 '
 
+#__LINE_EOF__=$NEW_LINE # is set bellow
 _readline_() {
-	__LINE_EOF__=$NEW_LINE
-	IFS= read -r __LINE__ || {
+	IFS= read -r __LINE__ && \
+	__LINE_NUMBER__=$((__LINE_NUMBER__+1)) \
+	|| {
+		__pp_tmp__=$?
 		__LINE_EOF__=''
-		case $__LINE__ in '') return $?; esac
+		case $__LINE__ in '') return $__pp_tmp__; esac
 	}
+}
+
+
+# solved:
+# case ${ASH_VERSION+x}${ZSH_VERSION+x}${BASH_VERSION+x} in
+# *x*)
+# 	_eval_trap_() {
+# 		# why create trap instead of: `eval '$1' || die ...`
+# 		# reason: `set -e` is not working. https://mywiki.wooledge.org/BashFAQ/105
+# 
+# 		trap "$2" ERR
+# 		eval "$1"
+# 		case $? in 0) ;; *) eval "$2"; esac
+# 		trap - ERR # remove ERR trap
+# 	}
+# 	;;
+# '')
+# 	# trap ERR seems to be only for ksh and bash
+# 	# does not run on dash or sh ( and semms to have no alternative , BUT GOT 1 https://stackoverflow.com/a/58297505/10823470 )
+# 	# none of this wokrs: `for i in {1..64} EXIT ERR QUIT; do dash -c ' set -eu; trap " PRINT ME, when '$i' : \$?" '$i'; false; echo NEVER PRINT ME  '; done`
+# 	_eval_trap_() {
+# 		eval "$1" || eval "$2"
+# 	}
+# esac
+#
+_eval_trap_() {
+	# why create trap instead of: `eval '$1' || die ...`
+	# reason: `set -e` is not working. https://mywiki.wooledge.org/BashFAQ/105
+	# thanks https://stackoverflow.com/a/58297505/10823470 for sh version
+
+	trap "(exit \$?) && exit || $2" EXIT
+	eval "$1"
+	case $? in 0) ;; *) eval "trap - EXIT; (exit $?) || $2"; esac
+	trap - EXIT # remove ERR trap
 }
 
 __pp_tmp__=${BASH_VERSION-${ASH_VERSION-${ZSH_VERSION-${KSH_VERSION-${YASH_VERSION-$( (eval 'a=" "; echo ${a/" "/x}') 2>/dev/null 1>&2 )}}}}}
@@ -63,23 +101,22 @@ case $?:$__pp_tmp__ in # doesnt work for `dash`, `posh`, (older version of worki
 	}
 esac
 
-_pp_() {
+_pp_interpred_stdin_() {
 	while _readline_; do
-		__LINE_NUMBER__=$((__LINE_NUMBER__+1))
 		case $__LINE__ in
 			!!|!!#*|'!! #'*|'!!	#'*) # fully ignore lines that contains only a comment
 			;;
 			!!*)
-				eval "${__LINE__##!!}" || {
-					_die_ "LINE $__LINE_NUMBER__: evaluation error $?" 3
-				}
+				_eval_trap_ "${__LINE__##!!}" \
+					'_die_ "$__FILE__:$__LINE_NUMBER__: '\''$__LINE__'\'': [line] evaluation error $?" 3' \
+				;
 			;;
 			\|\|*) printf %s"$__LINE_EOF__" "${__LINE__#??}";;
 			!\|*)
 				__PREVLINES__=${__LINE__#??}
 				while :; do
 					_readline_ || {
-						_die_ "expected line that matches '!!*', but got end of input instead" 5
+						_die_ "$__FILE__:$__LINE_NUMBER__: [EOF] expected line to that match '!!*', but got end of input instead" 5
 					}
 					case $__LINE__ in
 						#!||!|#*|'!| #'*|'!|	#'*)
@@ -105,31 +142,52 @@ _pp_() {
 
 						!\|*) __PREVLINES__=$__PREVLINES__$NEW_LINE${__LINE__##??};;
 						!!*)
-							eval "$__PREVLINES__$NEW_LINE${__LINE__##??}" || {
-								_die_ "LINES $__LINE_NUMBER__: evaluation error $?" 3
-							}
+							_eval_trap_ "$__PREVLINES__$NEW_LINE${__LINE__##??}" \
+								'_die_ "$__FILE__:(lines before $__LINE_NUMBER__): [lines] evaluation error $?" 3' \
+							;
 							break
 						;;
-						\|\|*) # nested lin that is trimmed from start, note/TODO: !{}! is not interpreted here
+						\|\|*) # nested lin that is trimmed from start
 							__pp_tmp__=${__LINE__#??}
 							__pp_tmp__=${__pp_tmp__#"${__pp_tmp__%%[!" 	"]*}"}
-							__PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "${__pp_tmp__}")"
+							__PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__pp_tmp__")"
 						;;
+						# NOTE/UNIMPLEMENTED/TODO:! here does not parse for `\!{...}\!` expression.
 						*) __PREVLINES__=$__PREVLINES__$NEW_LINE"printf %s\\\\n $(_escape_ "$__LINE__")";;
 					esac
 				done
 				unset __PREVLINES__
 			;;
-			*!\{*\}!*)
-				__pp_tmp__=${__LINE__#*\!{}
-				__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}") || {
-					_die_ "Line $__LINE_NUMBER__: section evaluation error $?" 3
-				}
+			*!\{*\}!*) # TODO: fix more then 2 inlines for same line
+				__pp_tmp__=${__LINE__#*\!\{}
+
+				# bug/note:
+				# on dash: `set -e; a=$( false; echo not-stopped )` does exit and `a=''` as expected.
+				# however on bash (at least for newest version 5.1): does not exit and `a=not-stopped`!
+				# ref: https://stackoverflow.com/questions/69138072/shopt-s-inherit-errexit-has-no-effect-in-declare-command
+				# > errexit behavior is wildly different between individual shell releases,
+				# > **not to mention between different shells and even on different calling contexts**
+				#
+				# consider fix: instead of stdout to use var. maybe `o` short for output.
+				# in this way interpreted input will be shorter for inline replacement: , but will encourage to use above bug/note.
+				# `\!{o=$test}\!` = (old) `\!{printf %s "$test"}\!` -> `test`
+				_eval_trap_ '__pp_tmp__=$(eval "${__pp_tmp__%\}\!*}")' \
+					'_die_ "$__FILE__:$__LINE_NUMBER__: '\''$__LINE__'\'': [inline] evaluation error $?" 3' \
+				;
+
+				# todo: write tests for how error are handled here
+
 				printf %s%s%s"$__LINE_EOF__" \
-					"${__LINE__%%\!{*}" \
+					"${__LINE__%%\!\{*}" \
 					"$__pp_tmp__" \
 					"${__LINE__##*\}\!}"
 				;;
+			\#\!\/*/pp|\#\!"/usr/bin/env pp")
+				# if first line is shebang of pp, then skip it
+				case $__LINE_NUMBER__ in 1) ;; *)
+					printf %s"$__LINE_EOF__" "$__LINE__"
+				esac
+			;;
 			*)
 				printf %s"$__LINE_EOF__" "$__LINE__"
 			;;
@@ -138,20 +196,45 @@ _pp_() {
 }
 
 __PP_LVL__=0
-pp() {
-	__PP_LVL__=$((__PP_LVL__+1)) # allow included scripts to detect included file level
+# if calling this fn, you should provide the subshell,
+# for example: `!! ( set -eu; pp ... )`
+# otherwise the error message will me messed up (line counting, file names, etc.)
+_pp_() {
+	__PP_LVL__=$(( __PP_LVL__ + 1 )) # allow included scripts to detect included file level
+	unset __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__; __LINE_EOF__=$NEW_LINE
+	# DONT: local __FILE__ __LINE__ __PREVLINES__ __LINE_NUMBER__ __LINE_EOF__; __LINE_EOF__=$NEW_LINE
+	# REASON: when using `trap ...` is executed ouside all fns and vars are not set - in top level where trap is handled
+	# AND and I have not tested what will happen after `trap - ERR` in nested *pp* call
+	#
+	# possible fix is to `trap '__FILE__='"$(quote "$__FILE__")"...`
+	# but becomes very long and pointless since
+	# subshell is already preferred in order to not stop parrent process when executing `!! exit`
+
 	case $1 in
 		--) shift;;
 		-) ;;
-		-*) _die_ "No arguments are taken";;
+		# TODO/consider: adding -v for verbose output (+ _log_ fn)
+		-?*) _die_ "No arguments are taken";;
 	esac
 	case $# in 0) set -- -; esac
+
+
 	for __FILE__; do
+		[ ! -d "$__FILE__" ] || {
+			_die_ "'$__FILE__' is a directory" # dash/ash does not have native error for this, but bash does have.
+		}
 		case $__FILE__ in
-			-) _pp_;;
-			*) _pp_ < "$__FILE__";;
+			-) _pp_interpred_stdin_;;
+			*) _pp_interpred_stdin_ < "$__FILE__";;
 		esac
+		case $? in 0) ;; *) return; esac
 	done
+	#unset __FILE__ __LINE__ __PREVLINES__ __LINE_EOF__ __LINE_NUMBER__ # poinless in subshell end / main call end
 }
 
-pp "$@"
+
+pp() { ( _pp_ "$@" ); }
+
+case ${0##*/} in pp|pp.preprocess*)
+	_pp_ "$@"
+esac

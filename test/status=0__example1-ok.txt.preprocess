@@ -1,3 +1,4 @@
+#!/usr/bin/env pp
 foo
 !! echo "Insert Text"
 bar

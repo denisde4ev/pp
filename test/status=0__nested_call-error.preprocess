@@ -1,0 +1,5 @@
+!! echo __FILE__:1 == $__FILE__:$__LINE_NUMBER__
+!! echo '!! exit 123' | pp 2>/dev/null; :
+
+
+!! echo __FILE__:5 == $__FILE__:$__LINE_NUMBER__

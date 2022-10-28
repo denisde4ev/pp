@@ -1,0 +1,6 @@
+!! echo 1;
+!! set -e;
+!! (exit 123) || true
+2
+!! (exit 123); true
+3 # should not reach here
