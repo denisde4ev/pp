@@ -8,7 +8,7 @@ _die_() {
 case $1 in
 --help)
 	printf %s\\n \
-		"Usage: ${0##*/} !{printf %s "${VERSION?}"}!(denisde4ev)" \
+		"Usage: ${0##*/} !{printf %s "${_pkgver:-${VERSION?}}"}!(denisde4ev)" \
 		"  * STDIN | ${0##*/} > output -- See pp(1) for details and examples" \
 		"Syntax:" \
 		"  * Lines beginning !! are replaced with the following text evaluated" \
