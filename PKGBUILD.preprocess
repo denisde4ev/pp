@@ -1,35 +1,69 @@
+#!/usr/bin/env pp
+!! set -eu
+!!
+!| die() {
+!| 	printf %s\\n >&2 "$1"
+!| 	exit ${2-2}
+!! }
+!!
 !! set -eu
 !! case $__FILE__ in */*) cd "${__FILE__%/*}"; esac
 !!
-!|case $(git rev-parse --abbrev-ref HEAD) in master) ;; *)
-!|	printf %s\\n >&2 "this script must be run from master branch!"
-!|	exit 1
-!!esac
+!| case $(git rev-parse --abbrev-ref HEAD) in master|*) ;; *)
+!| 	die "this script must be run from master branch!" 1
+!! esac
 !!
-!| #case $(git status -unormal --porcelain | grep -vx ".. ${0##*/}") in ?*)
-!| #	printf %s\\n >&2 "there are changes that needs to be commited!"
-!| #	exit 1
-!! #esac
-
-
-!| printf >&2 "_pkgver: "
-!| read _pkgver
+!! #  !| case $(git status -unormal --porcelain | grep -vx ".. ${0##*/}") in ?*)
+!! #  !| 	printf %s\\n >&2 "there are changes that needs to be commited!"
+!! #  !| 	exit 1
+!! #  !! esac
+!!
+!!
+!| case ${_pkgver:+_}${pkgver:+p} in
+!| 	p) _pkgver=$pkgver;;
+!| 	'') printf %s >&2 "_pkgver: "; read _pkgver </dev/tty;;
+!! esac
+!!
 !! pkgver=${_pkgver#v}
-
+!! _pkgver=v$pkgver
+!!
+!! case $pkgver in *[!0-9a-z.-]*) die "invalid pkgver: '$pkgver'"; esac
+!!
+!| case ${NODOC-} in
+!| 	0|false|no|'') unset NODOC;;
+!| 	?*) NODOC='';;
+!! esac
+!!
+!!
 pkgname=pp-denisde4ev
 _pkgver=!{printf %s "${_pkgver}"}!
 pkgver=!{printf %s "${pkgver}"}!
+# TODO: add all required vars for PKGBUILD
 
-
-!|build() {
-!|	pandoc --standalone ./pp.1.md --to man > pp.1
-!|	#pp pp.preprocess > pp || \
-!|	sed 's/echo \\!\\{...\\}\\!/.../ ; s/!{printf %s "${_pkgver:-${VERSION?}}"}!/'"${_pkgver?}/" pp.preprocess > pp
-!|}
-!! build && printf %s\\n "$__PREVLINES__"
-
-# busybox makes smaller files, separate qzip to provide -9 max optimization
-fakeroot busybox tar -cvf - pp pp.1 | gzip -9 > pp-"${_pkgver}".tar.gz
-
-
-gh release create --title="${_pkgver}" "${_pkgver}"  pp pp-"${_pkgver}".tar.gz
+!! set -eu
+!!
+!| build_fn='build() {
+!|	'${NODOC-'pandoc --standalone ./pp.1.md --to man > pp.1
+!|	'}'export VERSION=$_pkgver
+!|	./pp.preprocess pp.preprocess > pp
+!|}'
+!!
+!! eval "$build_fn"
+!!
+!! printf %s\\n >&2 "### preprocess: testing build before outputing the build fn..."
+!| build
+!| case $? in
+!| 	0) printf %s\\n "$build_fn";; # build fn is outputed here
+!| 	*) die "failed to build: $?" 1;; # not expected to be executed: when `set -e` is used then it exits imidiate after build fn call; only option is to use trap EXIT/ERR
+!! esac
+!!
+!!
+!!
+!!
+!! ## TODO: move to another script
+!! ## if false; then
+!! ## 	# busybox makes smaller files, separate qzip to provide -9 max optimization
+!! ## 	fakeroot busybox tar -cvf - pp pp.1 | gzip -9 > pp-"${_pkgver}".tar.gz
+!! ## 
+!! ## 	gh release create --title="${_pkgver}" "${_pkgver}"  pp pp-"${_pkgver}".tar.gz
+!! ## esac
