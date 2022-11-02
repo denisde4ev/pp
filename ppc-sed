@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# NOTE: this version does not support `!{echo 1}!` expression!
+# and nested pp call will not be inlined in any way!
+
+sed -nEe '1{/^#!.*pp/d}; /^!/{s/^![!|]//p;d};'s/\'/\'\\\'\'/g'; s/.*/printf %s\\\\n '\'\&\''/p' "$@"

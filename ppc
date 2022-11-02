@@ -1,0 +1,59 @@
+#!/bin/bash
+
+case $1 in --help) printf %s\\n "usage: ${0##*/} [file]..."; exit; esac
+
+# note: nested pp call won't be inlined!
+
+
+
+##case ${BASH_VERSION-} in
+##[5-9].*)
+##	echo_quote() { # if it throws error you must know why
+##		echo "printf %%s\\\\\\\\n %s\\n" "${@@Q}"
+##	}
+##*)
+	echo_quote() { # note: non-POSIX `printf %q`
+		case $1 in
+			#-N) shift; printf 'printf %%s %q;'  "$@";; # why no
+			 -n) shift; printf 'printf %%s %q\n' "$@";;
+			  *)        printf 'printf %%s\\\\n %q\n' "$@";;
+		esac
+	}
+##	;;
+##*)
+##	# consider:
+##	# https://github.com/denisde4ev/arg 
+##	# https://github.com/denisde4ev/bin/raw/master/quote
+##	# ash: https:/github.com/denisde4ev/bin-win/raw/master/bin/quote.sh
+##	echo "ERR: quote unimplemented!"; exit 4 
+##esac
+##
+
+main() {
+	IFS=''
+	while read -r l; do
+		case $l in
+			![!\|]*) echo "${l#??}";;
+			*\!\{*\}\!*)
+				# t=${t}
+				# printf "printf %%s %q\\n" "$l"
+				echo_quote -n "${l%%\!\{*}"
+				t=${l#*\!\{}
+				echo "${t%%\}\!*}"
+				echo_quote "${t#*\}\!}"
+			;;
+
+			# don't printf everything, try to make smaller compiled output:
+			'') echo echo;;
+			' ') echo "echo ' '";;
+			*[\'\\\']*) printf "printf %%s\\\\\\\\n %q\\n" "$l";;
+			*) echo "echo '$l'";;
+		esac
+	done
+
+}
+
+case $# in
+	0) main;;
+	*) for i; do main < "$i"; done
+esac
