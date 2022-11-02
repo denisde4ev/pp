@@ -1,0 +1,16 @@
+__LINE_NUMBER__=1 == 1
+__LINE_NUMBER__=2 == 2
+__LINE_NUMBER__=3 == 3
+
+
+__LINE_NUMBER__=10 == 10
+__LINE__='!! # a comment' == '!! # a comment'
+
+__PREVLINES__=' :' == ' :'
+
+__PREVLINES__=':
+ :' == $':\n :'
+
+__LINE_EOF__='
+' == $'\n'
+__LINE_EOF__='' == ''

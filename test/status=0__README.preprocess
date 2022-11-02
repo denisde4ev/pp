@@ -1,0 +1,15 @@
+
+```
+Today (!{date -d@0 '+%Y-%m-%d'}!) there's a lot to do:
+!| cat << EOF
+!|* Wash clothes
+!|* Read pure sh bible
+!|* Write README
+!!EOF
+Tomorrow's tasks can wait. !{# Change wording? }!
+```
+
+```
+!!# This document is written by Tom
+Important !{#Make bold?}! content
+```

@@ -1,0 +1,3 @@
+!! echo __FILE__:1 == $__FILE__:$__LINE_NUMBER__
+!! for i in 1 2 3 4 5; do printf %s\\n '!! printf %s\\n "-:'$i' == $__FILE__:$__LINE_NUMBER__"'; done | pp
+!! echo __FILE__:3 == $__FILE__:$__LINE_NUMBER__
