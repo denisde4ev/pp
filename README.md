@@ -7,10 +7,7 @@
 
 
 **pp** expands inline shell commands:
-* UNIX philosophy: `stdin` for input, `stdout` for output
 * Nothing new: flexible and familiar by design by accepting shell commands
-* Minimal: [shellcheck](https://github.com/koalaman/shellcheck) linted <30 s.l.o. POSIX sh script
-
 
 ```
 Today (!{date '+%Y-%m-%d'}!) there's a lot to do:
